@@ -9,19 +9,12 @@ const searchParams = new URLSearchParams({
   page: page,
   per_page: limit,
 });
-const apiUrl = inputValue =>
-  `https://pixabay.com/api/?key=31935843-a63100f17f055f7a8dc315776&q=${inputValue}&${searchParams}`;
-//const parsedSearch = inputValue.trim();
 
-export const fetchImages = async this.props.inputValue => {
-  try {
-    const response = await axios(apiUrl);
-    const images = await response.data;
-    console.log(images);
-    return images;
-  } catch (error) {
-    if (error.response) {
-      throw new Error('We find nothing that name!');
-    }
-  }
+axios.defaults.baseURL =
+  'https://pixabay.com/api/?key=31935843-a63100f17f055f7a8dc315776&';
+export const fetchImagesWithQuery = async searchQuery => {
+  const response = await axios.get(`q=${searchQuery}&${searchParams}`);
+  console.log(response);
+  return response.data;
 };
+export default { fetchImagesWithQuery };
