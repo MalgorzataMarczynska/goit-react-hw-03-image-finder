@@ -1,8 +1,10 @@
 import React from 'react';
-import fetchImages from './api/FetchImages.js';
 import { ImageGallery } from './ImageGallery/ImageGallery.js';
 import { ImageGalleryItem } from './ImageGalleryItem/ImageGalleryItem.js';
 import { Searchbar } from './searchbar/Searchbar.js';
+import { fetchImagesWithQuery } from './api/FetchImages.js';
+import { FallingLines } from 'react-loader-spinner';
+
 export class App extends React.Component {
   state = {
     images: [],
@@ -10,46 +12,61 @@ export class App extends React.Component {
     IsLoading: false,
     error: null,
   };
+  input = React.createRef();
 
-  handleChange = evt => {
-    this.setState({ searchQuery: evt.target.value });
-  };
-  // handleRequest = async inputValue => {
-  //   this.setState({ isLoading: true });
-  //   const images = await fetchImages(inputValue);
-  //   this.setState({ images, isLoading: false });
-  // };
-  handleSubmit = e => {
-    e.preventDefault();
-    //e.target.reset();
-    const { searchQuery } = this.state;
-  };
-  async componentDidMount() {
-    const { searchQuery } = this.state;
+  handleRequest = async (searchQuery = 'sun') => {
     this.setState({ isLoading: true });
     try {
-      const images = fetchImages.fetchImagesWithQuery({ searchQuery });
+      const images = await fetchImagesWithQuery(searchQuery);
+      console.log(images);
       this.setState({ images });
     } catch (error) {
       this.setState({ error });
     } finally {
       this.setState({ isLoading: false });
     }
+  };
+  handleSubmit = e => {
+    e.preventDefault();
+    console.log('keywords:', this.input.current.value);
+    //e.target.reset();
+    const { searchQuery } = this.state;
+    this.setState({ searchQuery: this.input.current.value });
+    this.handleRequest(searchQuery);
+  };
+
+  async componentDidMount() {
+    this.handleRequest();
+  }
+  componentDidUpdate(_prevProps, prevState) {
+    if (
+      prevState.searchQuery !== this.state.searchQuery &&
+      this.state.searchQuery.length > 3
+    ) {
+      this.handleRequest(this.state.searchQuery);
+    }
   }
 
   render() {
-    const { searchQuery, images } = this.state;
+    const { images, isLoading, error } = this.state;
 
     return (
       <div>
-        <Searchbar onSubmit={this.handleSubmit} />
-        <ImageGallery>
-          {images.length > 0 ? (
-            <ImageGalleryItem images={this.state.images} />
-          ) : (
-            <p>nic nie wyszukałeś jeszcze</p>
-          )}
-        </ImageGallery>
+        <Searchbar onSubmit={this.handleSubmit} input={this.input} />
+        {error && <p>Sorry, something went really wrong: {error.message}</p>}
+        {isLoading && (
+          <FallingLines
+            color="#3f51b5"
+            width="100"
+            visible={true}
+            ariaLabel="falling-lines-loading"
+          />
+        )}
+        {images.length > 0 && (
+          <ImageGallery>
+            <ImageGalleryItem images={this.state.images}></ImageGalleryItem>
+          </ImageGallery>
+        )}
       </div>
     );
   }
