@@ -3,22 +3,34 @@ import { ImageGallery } from './ImageGallery/ImageGallery.js';
 import { ImageGalleryItem } from './ImageGalleryItem/ImageGalleryItem.js';
 import { Searchbar } from './searchbar/Searchbar.js';
 import { fetchImagesWithQuery } from './api/FetchImages.js';
+import { Modal } from './Modal/Modal.js';
+import { Button } from './Button/Button.js';
 import { FallingLines } from 'react-loader-spinner';
-
+let page = 1;
 export class App extends React.Component {
   state = {
     images: [],
     searchQuery: '',
     IsLoading: false,
     error: null,
+    modalIsOpen: false,
+    currentImageClicked: {},
+    page: 1,
   };
   input = React.createRef();
 
-  handleRequest = async (searchQuery = 'sun') => {
+  handleRequest = async (searchQuery = 'sun', page) => {
     this.setState({ isLoading: true });
     try {
-      const images = await fetchImagesWithQuery(searchQuery);
-      console.log(images);
+      const data = await fetchImagesWithQuery(
+        searchQuery,
+        (page = this.state.page)
+      );
+      const totalPages = Math.ceil(data.totalHits / 12);
+      const images = data.hits;
+      if (this.state.page > totalPages) {
+        return alert('You have reached end of results');
+      }
       this.setState({ images });
     } catch (error) {
       this.setState({ error });
@@ -28,13 +40,17 @@ export class App extends React.Component {
   };
   handleSubmit = e => {
     e.preventDefault();
-    console.log('keywords:', this.input.current.value);
-    //e.target.reset();
-    const { searchQuery } = this.state;
+    const { searchQuery, page } = this.state;
     this.setState({ searchQuery: this.input.current.value });
-    this.handleRequest(searchQuery);
+    this.handleRequest(searchQuery, page);
   };
-
+  handlePage = () => {
+    const { searchQuery, page } = this.state;
+    this.setState(prevState => {
+      return { page: prevState.page + 1 };
+    });
+    this.handleRequest(searchQuery, page);
+  };
   async componentDidMount() {
     this.handleRequest();
   }
@@ -43,15 +59,57 @@ export class App extends React.Component {
       prevState.searchQuery !== this.state.searchQuery &&
       this.state.searchQuery.length > 3
     ) {
-      this.handleRequest(this.state.searchQuery);
+      this.setState({ page: 1 });
+      this.handleRequest(this.state.searchQuery, this.state.page);
     }
   }
 
+  checkModalKey = e => {
+    if (e.code === 'Escape') {
+      this.closeModal();
+    }
+  };
+  checkModalOverlay = evt => {
+    if (evt.target.classList.contains('Modal_Overlay__NOEEw')) {
+      this.closeModal();
+    }
+  };
+
+  closeModal = () => {
+    document.removeEventListener('keydown', this.checkModalKey);
+    document.removeEventListener('click', this.checkModalOverlay);
+    this.setState({
+      modalIsOpen: false,
+    });
+  };
+  toggleModal = e => {
+    if (!this.state.modalIsOpen) {
+      document.addEventListener('keydown', this.checkModalKey);
+      document.addEventListener('click', this.checkModalOverlay);
+    } else {
+      document.removeEventListener('keydown', this.checkModalKey);
+      document.removeEventListener('click', this.checkModalOverlay);
+    }
+    e.preventDefault();
+    const clickedUrl = e.currentTarget.href;
+    const clickedImageAlt = e.target.alt;
+    const clickedObject = { clickedUrl, clickedImageAlt };
+    this.setState({
+      modalIsOpen: !this.state.modalIsOpen,
+      currentImageClicked: clickedObject,
+    });
+  };
+
   render() {
-    const { images, isLoading, error } = this.state;
+    const { images, isLoading, error, modalIsOpen, currentImageClicked } =
+      this.state;
 
     return (
-      <div>
+      <div
+        ref={node => {
+          this.node = node;
+        }}
+      >
         <Searchbar onSubmit={this.handleSubmit} input={this.input} />
         {error && <p>Sorry, something went really wrong: {error.message}</p>}
         {isLoading && (
@@ -62,10 +120,20 @@ export class App extends React.Component {
             ariaLabel="falling-lines-loading"
           />
         )}
-        {images.length > 0 && (
+        {images.length > 0 && !modalIsOpen ? (
           <ImageGallery>
-            <ImageGalleryItem images={this.state.images}></ImageGalleryItem>
+            <ImageGalleryItem
+              images={this.state.images}
+              toggleModal={this.toggleModal}
+            />
+            <Button nextPageLoader={this.handlePage} />
           </ImageGallery>
+        ) : (
+          <Modal
+            images={this.state.images}
+            onClose={this.toggleModal}
+            currentImageClicked={currentImageClicked}
+          ></Modal>
         )}
       </div>
     );
