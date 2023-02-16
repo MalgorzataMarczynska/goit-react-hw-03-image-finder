@@ -6,7 +6,7 @@ import { fetchImagesWithQuery } from './api/FetchImages.js';
 import { Modal } from './Modal/Modal.js';
 import { Button } from './Button/Button.js';
 import { FallingLines } from 'react-loader-spinner';
-let page = 1;
+
 export class App extends React.Component {
   state = {
     images: [],
