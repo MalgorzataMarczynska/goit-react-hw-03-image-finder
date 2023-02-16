@@ -70,7 +70,7 @@ export class App extends React.Component {
     }
   };
   checkModalOverlay = evt => {
-    if (evt.target.classList.contains('Modal_Overlay')) {
+    if (evt.target.classList.contains('Modal_Overlay__yoxbg')) {
       this.closeModal();
     }
   };
