@@ -70,7 +70,7 @@ export class App extends React.Component {
     }
   };
   checkModalOverlay = evt => {
-    if (evt.target.classList.contains('Modal_Overlay__NOEEw')) {
+    if (evt.target.classList.contains('Modal_Overlay__')) {
       this.closeModal();
     }
   };
