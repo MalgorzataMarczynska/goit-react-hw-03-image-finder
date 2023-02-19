@@ -50,7 +50,11 @@ export class App extends React.Component {
       return { page: prevState.page + 1 };
     });
     this.handleRequest(searchQuery, page);
+    this.setState(prevState => {
+      return { images: prevState.images.concat(this.state.images) };
+    });
   };
+
   async componentDidMount() {
     this.handleRequest();
   }
