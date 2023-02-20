@@ -31,6 +31,11 @@ export class App extends React.Component {
       if (this.state.page > totalPages) {
         return alert('You have reached end of results');
       }
+      if (images === 0) {
+        return alert(
+          'Sorry, we did not find any result, check your query or try something similar'
+        );
+      }
       this.setState(prevState => ({
         images: [...prevState.images, ...images],
       }));
