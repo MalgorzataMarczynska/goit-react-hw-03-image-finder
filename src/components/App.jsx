@@ -31,7 +31,9 @@ export class App extends React.Component {
       if (this.state.page > totalPages) {
         return alert('You have reached end of results');
       }
-      this.setState({ images });
+      this.setState(prevState => ({
+        images: [...prevState.images, ...images],
+      }));
     } catch (error) {
       this.setState({ error });
     } finally {
@@ -40,19 +42,13 @@ export class App extends React.Component {
   };
   handleSubmit = e => {
     e.preventDefault();
-    const { searchQuery, page } = this.state;
-    this.setState({ searchQuery: this.input.current.value });
-    this.handleRequest(searchQuery, page);
+    const searchQuery = this.input.current.value;
+    if (this.state.searchQuery === searchQuery) return;
+    this.setState({ searchQuery, page: 1, images: [] });
   };
   handlePage = () => {
-    const { searchQuery, page } = this.state;
-    this.setState(prevState => {
-      return { page: prevState.page + 1 };
-    });
-    this.handleRequest(searchQuery, page);
-    this.setState(prevState => {
-      return { images: prevState.images.concat(this.state.images) };
-    });
+    const page = this.state.page + 1;
+    this.setState({ page });
   };
 
   async componentDidMount() {
@@ -60,10 +56,9 @@ export class App extends React.Component {
   }
   componentDidUpdate(_prevProps, prevState) {
     if (
-      prevState.searchQuery !== this.state.searchQuery &&
-      this.state.searchQuery.length > 3
+      prevState.searchQuery !== this.state.searchQuery ||
+      this.state.page !== prevState.page
     ) {
-      this.setState({ page: 1 });
       this.handleRequest(this.state.searchQuery, this.state.page);
     }
   }
