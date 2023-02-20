@@ -29,12 +29,7 @@ export class App extends React.Component {
       const totalPages = Math.ceil(data.totalHits / 12);
       const images = data.hits;
       if (this.state.page > totalPages) {
-        return alert('You have reached end of results');
-      }
-      if (images === 0) {
-        return alert(
-          'Sorry, we did not find any result, check your query or try something similar'
-        );
+        return alert('You have reached end of results or we did not find any');
       }
       this.setState(prevState => ({
         images: [...prevState.images, ...images],
